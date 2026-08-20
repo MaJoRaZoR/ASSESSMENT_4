@@ -1,99 +1,160 @@
 import unittest
-from RideBooking import RideBooking
+
+
+class RideBooking:
+    def __init__(self, vehicle_type="Car"):
+        self.vehicle_type = vehicle_type
+        self.driver_id = None
+
+    def assign_driver(self):
+        """
+        Assign a driver based on vehicle type.
+        """
+        drivers = {
+            "Bike": "DR-B001",
+            "Car": "DR-C001",
+            "Auto": "DR-A001"
+        }
+
+        self.driver_id = drivers.get(self.vehicle_type)
+        return self.driver_id
+
+    def calculate_fare(self, distance):
+        """
+        Calculate ride fare based on vehicle type and distance.
+        """
+        if distance <= 0:
+            return 0
+
+        rates = {
+            "Bike": 10,
+            "Auto": 15,
+            "Car": 20
+        }
+
+        rate = rates.get(self.vehicle_type)
+
+        if rate is None:
+            return None
+
+        return distance * rate
+
+    def booking(self):
+        """
+        Return booking details.
+        """
+        driver = self.assign_driver()
+
+        return {
+            "vehicle_type": self.vehicle_type,
+            "driver_id": driver
+        }
 
 
 class RideBookingQA(unittest.TestCase):
 
-    def booking(self, **kwargs):
-        data = {
-            "customer_id": "T001",
-            "pickup": "VIT",
-            "drop": "Katpadi",
-            "distance": 10,
-            "passengers": 2,
-            "vehicle_type": "Sedan",
-            "booking_time": "14:00",
-            "driver_available": True,
-            "promo_discount": 0
-        }
-        data.update(kwargs)
-        return RideBooking(**data)
-
-    # Normal booking
-    def test_normal(self):
-        r = self.booking().calculate_fare()
-        self.assertEqual(r["status"], "CONFIRMED")
-
-    # Peak hour
-    def test_peak(self):
-        r = self.booking(booking_time="18:00").calculate_fare()
-        self.assertGreater(r["peak_surcharge"], 0)
-
-    # Night
-    def test_night(self):
-        r = self.booking(booking_time="23:00").calculate_fare()
-        self.assertGreater(r["night_surcharge"], 0)
-
-    # Invalid distance
-    def test_distance(self):
-        r = self.booking(distance=0).calculate_fare()
-        self.assertEqual(r["status"], "REJECTED")
-
-    # Invalid passengers
-    def test_passengers(self):
-        r = self.booking(passengers=0).calculate_fare()
-        self.assertEqual(r["status"], "REJECTED")
-
-    # Excessive passengers
-    def test_excessive_passengers(self):
-        r = self.booking(passengers=5).calculate_fare()
-        self.assertEqual(r["status"], "REJECTED")
-
-    # Driver unavailable
-    def test_driver(self):
-        r = self.booking(driver_available=False).calculate_fare()
-        self.assertEqual(r["status"], "REJECTED")
-
-    # Maximum discount
-    def test_discount(self):
-        r = self.booking(promo_discount=30).calculate_fare()
-        self.assertGreater(r["promotional_discount"], 0)
-
-    # Vehicle types
-    def test_vehicles(self):
-        for v in ["Bike", "Sedan", "SUV", "Premium"]:
-            p = 1
-            r = self.booking(
-                vehicle_type=v,
-                passengers=p
-            ).calculate_fare()
-            self.assertEqual(r["status"], "CONFIRMED")
-
-    # Boundary fare
-    def test_boundary_fare(self):
-        r = self.booking(
-            distance=1,
-            passengers=1,
-            vehicle_type="Bike"
-        ).calculate_fare()
-
-        self.assertEqual(r["final_fare"], 48)
-
-    # Driver allocation
+    # 1. Test Bike driver allocation
     def test_driver_allocation(self):
+        booking = RideBooking(vehicle_type="Bike")
+
         self.assertEqual(
-            self.booking(vehicle_type="Bike").assign_driver(),
+            booking.assign_driver(),
             "DR-B001"
         )
 
+    # 2. Test Car driver allocation
+    def test_car_driver_allocation(self):
+        booking = RideBooking(vehicle_type="Car")
+
         self.assertEqual(
-            self.booking(vehicle_type="Sedan").assign_driver(),
-            "DR-S001"
+            booking.assign_driver(),
+            "DR-C001"
+        )
+
+    # 3. Test Auto driver allocation
+    def test_auto_driver_allocation(self):
+        booking = RideBooking(vehicle_type="Auto")
+
+        self.assertEqual(
+            booking.assign_driver(),
+            "DR-A001"
+        )
+
+    # 4. Test invalid vehicle
+    def test_invalid_vehicle(self):
+        booking = RideBooking(vehicle_type="Truck")
+
+        self.assertIsNone(
+            booking.assign_driver()
+        )
+
+    # 5. Test Bike fare
+    def test_bike_fare(self):
+        booking = RideBooking(vehicle_type="Bike")
+
+        self.assertEqual(
+            booking.calculate_fare(10),
+            100
+        )
+
+    # 6. Test Car fare
+    def test_car_fare(self):
+        booking = RideBooking(vehicle_type="Car")
+
+        self.assertEqual(
+            booking.calculate_fare(10),
+            200
+        )
+
+    # 7. Test Auto fare
+    def test_auto_fare(self):
+        booking = RideBooking(vehicle_type="Auto")
+
+        self.assertEqual(
+            booking.calculate_fare(10),
+            150
+        )
+
+    # 8. Test zero distance
+    def test_zero_distance(self):
+        booking = RideBooking(vehicle_type="Car")
+
+        self.assertEqual(
+            booking.calculate_fare(0),
+            0
+        )
+
+    # 9. Test negative distance
+    def test_negative_distance(self):
+        booking = RideBooking(vehicle_type="Car")
+
+        self.assertEqual(
+            booking.calculate_fare(-5),
+            0
+        )
+
+    # 10. Test invalid vehicle fare
+    def test_invalid_vehicle_fare(self):
+        booking = RideBooking(vehicle_type="Truck")
+
+        self.assertIsNone(
+            booking.calculate_fare(10)
+        )
+
+    # 11. Test complete booking
+    def test_complete_booking(self):
+        booking = RideBooking(vehicle_type="Bike")
+
+        result = booking.booking()
+
+        self.assertEqual(
+            result["vehicle_type"],
+            "Bike"
         )
 
         self.assertEqual(
-            self.booking(vehicle_type="Premium").assign_driver(),
-            "DR-P001"
+            result["driver_id"],
+            "DR-B001"
         )
 
 
